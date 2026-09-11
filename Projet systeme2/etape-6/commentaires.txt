@@ -1,0 +1,64 @@
+
+6.1)
+La classe RemoteMemory simule un client qui communique avec le serveur mémoire distant via TCP.
+Elle permet de manipuler la mémoire distante comme un tableau Python normal.
+
+
+Méthode request :est la méthode principale ,elle crée une socket TCP,
+                 se connecte au serveur avec l’adresse et le port donnés,
+                 envoie une commande (PUT, GET, POST, DELETE) puis attend 
+                 la réponse du serveur avant de fermer la socket.
+
+Méthode getitem :elle permet d'utiliser la syntaxe mem[i].
+                 elle envoie la commande GET seg i.
+
+Méthode setitem :elle permet d'utiliser la syntaxe mem[i]=valeur.
+                 elle envoie la commande POST seg i valeur.
+
+Méthode free    :elle permet de supprimer le segment mémoire.
+                 elle envoie la commande DELETE seg.
+
+Méthode debug   :elle verifie si debug=True , elle affiche les 
+                 messages de debogage.
+
+Méthode enter/exit :D'apres une recherche sur le context manager de Python, 
+                    j'ai compris que python appelle automatique une fonction
+                    a la fin de lexecution d'une instruction.
+                    Par exemple :
+                    *Sans context manager: Si on ouvre un fichier avec "f = open("test.txt")"
+                                           il faut le fermer manuellement avec "f.close()".
+                    *Avec context manager: Il ferme automatiquement le fichier ,
+                                           "with open("test.txt") as f: ... "  quand le bloc with se termine.
+                                        
+
+Test effectué :
+
+J’ai utilisé :
+
+    with RemoteMemory("localhost", 12345, "toto", 512, debug=True) as mem:
+        mem[0] = 42
+
+et j’ai vérifié dans les messages debug que la commande DELETE toto
+était automatiquement envoyée à la fin du bloc with.
+
+
+6.2)
+J’ai teste la librairie ControledMemory. Elle enveloppe une memoire
+et garde une memoire de controle pour verifier que les
+valeurs lues correspondent bien aux dernieres valeurs ecrites. 
+Si une valeur est modifiee en dehors de ControledMemory,
+une exception est levee.
+
+
+J’ai lance deux clients en parallele sur deux segments différents. 
+Normalement, il n’y a pas de risque de corruption mémoire, car les segments 
+ont des zones physiques différentes dans le serveur.
+
+6.3)
+En lançant deux clients en parallèle dans des segments
+de même nom, risque-t-on d’observer une corruption mémoire?
+-->Quand j’ai lancé deux clients en parallèle avec le même nom de segment, 
+le deuxième client a d’abord échoué car il envoyait aussi la
+requête PUT seg0 10. Comme le premier client avait déjà créé ce segment,
+le serveur a répondu : error: segment seg0 already exists.
+
